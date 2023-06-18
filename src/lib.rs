@@ -358,6 +358,7 @@ pub enum RoboatError {
 pub enum ChallengeType {
     #[default]
     TwoStep,
+    Captcha,
 }
 
 impl TryFrom<String> for ChallengeType {
@@ -366,6 +367,7 @@ impl TryFrom<String> for ChallengeType {
     fn try_from(raw: String) -> Result<Self, Self::Error> {
         match raw.as_str() {
             "twostepverification" => Ok(ChallengeType::TwoStep),
+            "captcha" => Ok(ChallengeType::Captcha),
             _ => Err(RoboatError::MalformedResponse),
         }
     }
@@ -375,7 +377,7 @@ impl TryFrom<String> for ChallengeType {
 /// This challenge can be either a two step verification code or a captcha. This is specified by the `challenge_type` field.
 #[non_exhaustive]
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Default, Serialize, Deserialize)]
-pub struct ChallengeInfo {
+pub struct RawChallengeInfo {
     /// The string in the returned `rblx-challenge-id` header.
     pub challenge_id: String,
     /// The string in the returned `rblx-challenge-metadata` header.
@@ -386,6 +388,20 @@ pub struct ChallengeInfo {
     pub challenge_type: ChallengeType,
 }
 
+#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct TwoStepChallengeMetadataDecoded {
+    pub user_id: String,
+    pub challenge_id: String,
+    pub should_show_remember_device_checkbox: bool,
+    pub remember_device: bool,
+    pub session_cookie: String,
+    pub verification_token: String,
+    pub action_type: String,
+    pub request_path: String,
+    pub request_method: String,
+}
+
 /// The universal struct for a Roblox user in this crate.
 #[allow(missing_docs)]
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Default, Serialize, Deserialize)]
@@ -393,4 +409,14 @@ pub struct User {
     pub user_id: u64,
     pub username: String,
     pub display_name: String,
+}
+
+/// At least for now, we need to pass this context down to the validation layer.
+///
+/// This is hacky but is required so that we can match up ChallengeInfo with ChallengeSolutions.
+/// We need to do this since the challenge api is different for different endpoints as far as we know.
+#[non_exhaustive]
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
+enum TwoStepEndpointType {
+    SendTrade,
 }

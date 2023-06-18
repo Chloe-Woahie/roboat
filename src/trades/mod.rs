@@ -1,3 +1,4 @@
+use crate::EndpointType;
 use crate::{Client, Limit, RoboatError, User};
 use reqwest::header;
 use serde::{Deserialize, Serialize};
@@ -15,6 +16,8 @@ const TRADE_COUNT_API: &str = "https://trades.roblox.com/v1/trades/inbound/count
 /// For requests related to trades, we use Descending as the sort order.
 /// This is because there is hardly any use case for using a reverse sort order for trades.
 const SORT_ORDER: &str = "Desc";
+
+const SEND_TRADE_ENDPOINT_TYPE: EndpointType = EndpointType::SendTrade;
 
 /// The type of the trade you want to request (Inbound, Outbound, Completed, Inactive).
 #[derive(
